@@ -1,8 +1,6 @@
-name: Force Sync Fork from LazyVim/LazyVim
+name: Force Sync Fork
 
 on:
-  schedule:
-    - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
@@ -10,16 +8,39 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout your fork
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Force sync with upstream
+      - name: Debug - show current branches
         run: |
-          git remote add upstream https://github.com/LazyVim/LazyVim.git
-          git fetch upstream
-          git checkout main
+          echo "Current branches:"
+          git branch -a
+          echo "Current remote:"
+          git remote -v
+
+      - name: Add upstream
+        run: git remote add upstream https://github.com/LazyVim/LazyVim.git
+
+      - name: Fetch upstream
+        run: git fetch upstream
+
+      - name: Show upstream commits
+        run: |
+          echo "Upstream latest 5 commits:"
+          git log upstream/main -5 --oneline
+
+      - name: Force reset to upstream
+        run: |
+          git checkout main || git checkout -b main
           git reset --hard upstream/main
-          git push origin main --force
+
+      - name: Force push
+        run: git push origin main --force
+
+      - name: Verify
+        run: |
+          echo "Current commit after sync:"
+          git log -1 --oneline
